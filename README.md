@@ -1,4 +1,4 @@
-# Gas Pump OCR
+# Gas Pump OCR CN for private learning
 
 Project for attempting to scan pictures of gas pumps and detect the digits in the cost and fuel amount displays. Operating under the assumption that most pumps use a 7 segment digit display.
 
