@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture('rtmp://192.168.24.13/live/live')
+cap = cv2.VideoCapture("rtmp://192.168.24.13/live/live")
 is_open = cap.isOpened()
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # out = cv2.VideoWriter_fourcc('output.avi',fourcc,20.0,(640,480))
