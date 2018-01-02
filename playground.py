@@ -6,7 +6,7 @@ from ImageProcessing import FrameProcessor, ProcessingVariables
 from DisplayUtils.TileDisplay import show_img, reset_tiles
 
 window_name = 'Playground'
-file_name = 'tests/single_line/46A29Z.jpg'
+file_name = 'tests/single_line/6A68Z.jpg'
 #file_name = 'C:/Users/Administrator/Pictures/2.png'
 #file_name = 'samples/shell_berlin/test11.jpg'
 version = '_2_0'

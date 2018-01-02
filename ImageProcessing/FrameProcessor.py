@@ -55,35 +55,35 @@ class FrameProcessor:
 
         debug_images.append(('Original', self.original))
 
-        # Adjust the exposure 调整曝光度
+        #调整曝光度
         exposure_img = cv2.multiply(self.img, np.array([alpha]))
         debug_images.append(('Exposure Adjust', exposure_img))
 
-        # Convert to grayscale 灰度转换
+        #灰度转换
         img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
         debug_images.append(('Grayscale', img2gray))
 
-        # Blur to reduce noise 高斯模糊
+        #高斯模糊
         img_blurred = cv2.GaussianBlur(img2gray, (blur, blur), 0)
         debug_images.append(('Blurred', img_blurred))
 
         cropped = img_blurred
 
-        # Threshold the image 二值化
+        #二值化
         cropped_threshold = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,
                                                   threshold, adjustment)
         debug_images.append(('Cropped Threshold', cropped_threshold))
 
-        # Erode the lcd digits to make them continuous for easier contouring 图像侵蚀
+        #图像侵蚀
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (erode, erode))
         eroded = cv2.erode(cropped_threshold, kernel, iterations=iterations)
         debug_images.append(('Eroded', eroded))
 
-        # Reverse the image to so the white text is found when looking for the contours 图像反转
+        #图像反转
         inverse = inverse_colors(eroded)
         debug_images.append(('Inversed', inverse))
 
-        # Find the lcd digit contours  描画轮廓 findContours返回三个参数 image,contours,hierarchy
+        #描画轮廓 findContours返回三个参数 image,contours,hierarchy
         _, contours, _ = cv2.findContours(inverse, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         # get contours 这里应该已经得到轮廓数组
 
@@ -97,36 +97,36 @@ class FrameProcessor:
         total_digit_height = 0
         total_digit_y = 0
 
-        # Aspect ratio for all non 1 character digits 不是1 的高宽比
+        #不是1 的高宽比
         desired_aspect = 0.6
-        # Aspect ratio for the "1" digit  1的高宽比
+        # 1的高宽比
         digit_one_aspect = 0.3
-        # The allowed buffer in the aspect when determining digits 缓冲区
+        #缓冲区
         aspect_buffer = 0.15
 
-        # Loop over all the contours collecting potential digits and decimals  矩形框出来所有数字和小数点
+        #矩形框出来所有数字和小数点
         for contour in contours:
-            # get rectangle bounding contour 得到一个斜的框 x，y是矩阵左上点的坐标，w，h是矩阵的宽和高
+            # 得到一个斜的框 x，y是矩阵左上点的坐标，w，h是矩阵的宽和高
             [x, y, w, h] = cv2.boundingRect(contour)
 
             aspect = float(w) / h
             size = w * h
 
-            # It's a square, save the contour as a potential digit 方形的就作为一个数字
+            # 方形的就作为一个数字
             if size > 100 and aspect >= 1 - .3 and aspect <= 1 + .3:
                 potential_decimals.append(contour)
 
-            # If it's small and it's not a square, kick it out 如果很小且不是方的 就剔除他
+            #  如果很小且不是方的 就剔除他
             if size < 20 * 100 and (aspect < 1 - aspect_buffer and aspect > 1 + aspect_buffer):
                 continue
 
-            # Ignore any rectangles where the width is greater than the height 忽略任何宽度大大与高度的长方形
+            # 忽略任何宽度大大与高度的长方形
             if w > h:
                 if self.debug:
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (0, 0, 255), 2)
                 continue
 
-            # If the contour is of decent size and fits the aspect ratios we want, we'll save it 如果轮廓的尺寸合适则保存
+            #  如果轮廓的尺寸合适则保存
             if ((size > 2000 and aspect >= desired_aspect - aspect_buffer and aspect <= desired_aspect + aspect_buffer) or
                 (size > 1000 and aspect >= digit_one_aspect - aspect_buffer and aspect <= digit_one_aspect + aspect_buffer)):
                 # Keep track of the height and y position so we can run averages later
@@ -144,7 +144,7 @@ class FrameProcessor:
         right_most_digit = 0
         digit_x_positions = []
 
-        # Calculate the average digit height and y position so we can determine what we can throw out 计算高度和Y坐标的平均值
+        # 计算高度和Y坐标的平均值
         if potential_digits_count > 0:
             avg_digit_height = float(total_digit_height) / potential_digits_count
             avg_digit_y = float(total_digit_y) / potential_digits_count
@@ -166,7 +166,7 @@ class FrameProcessor:
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 debug_images.append(('digit' + str(ix), cropped))
 
-                # Call into the KNN to determine the digit
+                # Call KNN to determine the digit
                 digit = self.predict_digit(cropped)
                 if self.debug:
                     print("Digit: " + digit)
