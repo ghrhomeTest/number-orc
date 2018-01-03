@@ -7,8 +7,9 @@ import os
 import logging
 import inspect
 
-#确实添加了服务 但是需要用pyinstaller打包exe才能运行
-#具体参考 https://www.cnblogs.com/dcb3688/p/4496934.html
+# 确实添加了服务 但是需要用pyinstaller打包exe才能运行
+# 具体参考 https://www.cnblogs.com/dcb3688/p/4496934.html
+
 
 class PythonService(win32serviceutil.ServiceFramework):
     _svc_name_ = "PythonService2"
