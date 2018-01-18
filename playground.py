@@ -1,17 +1,18 @@
 import cv2
 import time
 import sys
-#测试提交
 from ImageProcessing import FrameProcessor, ProcessingVariables
 from DisplayUtils.TileDisplay import show_img, reset_tiles
+from UsbVideo import CaptureVideo
+
 
 window_name = 'Playground'
-file_name = 'tests/single_line/6A68Z.jpg'
-#file_name = 'C:/Users/Administrator/Pictures/2.png'
-#file_name = 'samples/shell_berlin/test11.jpg'
+file_name = 'tests/single_line/iii.jpg'
+# file_name = 'C:/Users/Administrator/Pictures/2.png'
+# file_name = 'samples/shell_berlin/test11.jpg'
 version = '_2_0'
 
-#设置面板的滑动条数值
+# 设置面板的滑动条数值
 erode = ProcessingVariables.erode
 threshold = ProcessingVariables.threshold
 adjustment = ProcessingVariables.adjustment
@@ -22,27 +23,30 @@ std_height = 90
 
 frameProcessor = FrameProcessor(std_height, version, True)
 
-#主程序
+# 主程序
+
+
 def main():
-    #载入图像
+    # 载入图像
     img_file = file_name
     if len(sys.argv) == 2:
         img_file = sys.argv[1]
-    #设置playground的UI
+    # 设置playground的UI
     setup_ui()
-    #设置图像参数
+    # 设置图像参数
     frameProcessor.set_image(img_file)
-    #处理图像
+    # 处理图像
     process_image()
-    #等待
+    # 等待 这里应该在
+    # CaptureVideo.cap_video()
     cv2.waitKey()
 
 
 def process_image():
-    #重置栈
+    # 重置栈
     reset_tiles()
     start_time = time.time()
-    #处理图像
+    # 处理图像
     debug_images, output = frameProcessor.process_image(blur, threshold, adjustment, erode, iterations)
 
     for image in debug_images:
@@ -55,7 +59,7 @@ def process_image():
 
 
 def setup_ui():
-    #创建窗口 命名为 window_name
+    # 创建窗口 命名为 window_name
     cv2.namedWindow(window_name)
     # 创建滑动条 初始值在ProcessingVariables.py里
     # 第一个参数是滑动条的名字 第二个是滑动条所在的窗口名字，第三个是默认位置
@@ -63,13 +67,15 @@ def setup_ui():
     cv2.createTrackbar('Threshold', window_name, int(threshold), 500, change_threshold)
     cv2.createTrackbar('Iterations', window_name, int(iterations), 5, change_iterations)
     cv2.createTrackbar('Adjust', window_name, int(adjustment), 200, change_adj)
+    # 先把erode去掉
     cv2.createTrackbar('Erode', window_name, int(erode), 5, change_erode)
     cv2.createTrackbar('Blur', window_name, int(blur), 25, change_blur)
 
 
 def change_blur(x):
+    # 滤波 模糊图像
     global blur
-    print('Adjust: ' + str(x))
+    print('blur: ' + str(x))
     if x % 2 == 0:
         x += 1
     blur = x
@@ -77,6 +83,7 @@ def change_blur(x):
 
 
 def change_adj(x):
+    # 亮度调节
     global adjustment
     print('Adjust: ' + str(x))
     adjustment = x
@@ -84,6 +91,7 @@ def change_adj(x):
 
 
 def change_erode(x):
+    # 图像膨胀
     global erode
     print('Erode: ' + str(x))
     erode = x
@@ -91,6 +99,7 @@ def change_erode(x):
 
 
 def change_iterations(x):
+    # 迭代次数
     print('Iterations: ' + str(x))
     global iterations
     iterations = x
@@ -98,6 +107,7 @@ def change_iterations(x):
 
 
 def change_threshold(x):
+    # 图像阈值 二值化
     print('Threshold: ' + str(x))
     global threshold
 

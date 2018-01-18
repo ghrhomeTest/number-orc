@@ -7,7 +7,9 @@ RESIZED_IMAGE_WIDTH = 20
 RESIZED_IMAGE_HEIGHT = 30
 CROP_DIR = 'crops'
 
-#图片处理 主要内容 这里的version='_2_0'
+# 图片处理 主要内容 这里的version='_2_0'
+
+
 class FrameProcessor:
     def __init__(self, height, version, debug=False, write_digits=False):
         self.debug = debug
@@ -33,7 +35,7 @@ class FrameProcessor:
         img = cv2.resize(self.img, dim, interpolation=cv2.INTER_AREA)
         return img, dim[0]
 
-    #knn训练
+    # knn训练
     def train_knn(self, version):
         npa_classifications = np.loadtxt("knn/classifications" + version + ".txt",
                                          np.float32)  # read in training classifications
@@ -44,67 +46,76 @@ class FrameProcessor:
         k_nearest = cv2.ml.KNearest_create()
         k_nearest.train(npa_flattened_images, cv2.ml.ROW_SAMPLE, npa_classifications)
         return k_nearest
-    #图像处理 return debug_images, output
+    # 图像处理 return debug_images, output
+
     def process_image(self, blur, threshold, adjustment, erode, iterations):
 
         self.img = self.original.copy()
-        #image 输出
+        # image 输出
         debug_images = []
-
+        # float(2.5)=1.250000 float保留六位小数
         alpha = float(2.5)
 
         debug_images.append(('Original', self.original))
 
-        #调整曝光度
+        # 调整曝光度
         exposure_img = cv2.multiply(self.img, np.array([alpha]))
         debug_images.append(('Exposure Adjust', exposure_img))
 
-        #灰度转换
+        # 灰度转换 这里出来的图像最干净
         img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
         debug_images.append(('Grayscale', img2gray))
 
-        #高斯模糊
+        # 高斯模糊
         img_blurred = cv2.GaussianBlur(img2gray, (blur, blur), 0)
         debug_images.append(('Blurred', img_blurred))
 
         cropped = img_blurred
+        # cropped = img2gray
 
-        #二值化
+        # 二值化
         cropped_threshold = cv2.adaptiveThreshold(cropped, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,
                                                   threshold, adjustment)
         debug_images.append(('Cropped Threshold', cropped_threshold))
 
-        #图像侵蚀
+        # 这里 ！！
+        # 图像侵蚀 问题应该在这里 把黑色区域放大 与小数点连起来了
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (erode, erode))
         eroded = cv2.erode(cropped_threshold, kernel, iterations=iterations)
         debug_images.append(('Eroded', eroded))
 
-        #图像反转
+        # 图像反转
         inverse = inverse_colors(eroded)
         debug_images.append(('Inversed', inverse))
 
-        #描画轮廓 findContours返回三个参数 image,contours,hierarchy
+
+        #
+
+        # 描画轮廓 findContours返回三个参数 image,contours,hierarchy
+        # cv2.RETR_EXTERNAL 检测最外围轮廓
+        # cv2.CHAIN_APPROX_NONE 保存物体边界上所有连续的轮廓点到contours向量里
         _, contours, _ = cv2.findContours(inverse, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # get contours 这里应该已经得到轮廓数组
+        # get contours 这里应该已经得到轮廓向量
 
         # Assuming we find some, we'll sort them in order left -> right 从左到右排序
         if len(contours) > 0:
             contours, _ = sort_contours(contours)
-
+        # 小数点
         potential_decimals = []
+        # 数字
         potential_digits = []
 
         total_digit_height = 0
         total_digit_y = 0
 
-        #不是1 的高宽比
-        desired_aspect = 0.6
+        # 不是1 的高宽比 0.6
+        desired_aspect = 0.55
         # 1的高宽比
         digit_one_aspect = 0.3
-        #缓冲区
+        # 缓冲区 原来是0.15
         aspect_buffer = 0.15
 
-        #矩形框出来所有数字和小数点
+        # 矩形框出来所有数字和小数点
         for contour in contours:
             # 得到一个斜的框 x，y是矩阵左上点的坐标，w，h是矩阵的宽和高
             [x, y, w, h] = cv2.boundingRect(contour)
@@ -112,12 +123,12 @@ class FrameProcessor:
             aspect = float(w) / h
             size = w * h
 
-            # 方形的就作为一个数字
-            if size > 100 and aspect >= 1 - .3 and aspect <= 1 + .3:
+            # 方形的就作为一个小数点
+            if size > 100 and 1 - .3 <= aspect <= 1 + .3:
                 potential_decimals.append(contour)
 
-            #  如果很小且不是方的 就剔除他
-            if size < 20 * 100 and (aspect < 1 - aspect_buffer and aspect > 1 + aspect_buffer):
+            #  如果很小且不是方的 重新跑
+            if size < 20 * 100 and 1 + aspect_buffer < aspect < 1 - aspect_buffer:
                 continue
 
             # 忽略任何宽度大大与高度的长方形
@@ -127,8 +138,8 @@ class FrameProcessor:
                 continue
 
             #  如果轮廓的尺寸合适则保存
-            if ((size > 2000 and aspect >= desired_aspect - aspect_buffer and aspect <= desired_aspect + aspect_buffer) or
-                (size > 1000 and aspect >= digit_one_aspect - aspect_buffer and aspect <= digit_one_aspect + aspect_buffer)):
+            if ((size > 2000) and (desired_aspect - aspect_buffer <= aspect <= desired_aspect + aspect_buffer) or
+                (size > 1000) and (digit_one_aspect - aspect_buffer <= aspect <= digit_one_aspect + aspect_buffer)):
                 # Keep track of the height and y position so we can run averages later
                 total_digit_height += h
                 total_digit_y += y
@@ -150,17 +161,19 @@ class FrameProcessor:
             avg_digit_y = float(total_digit_y) / potential_digits_count
             if self.debug:
                 print("Average Digit Height and Y: " + str(avg_digit_height) + " and " + str(avg_digit_y))
-        #定义输出的字符串
+        # 定义输出的字符串
         output = ''
         ix = 0
-        #算法主要的调整部分
+        # 算法主要的调整部分
         # Loop over all the potential digits and see if they are candidates to run through KNN to get the digit
         for pot_digit in potential_digits:
             [x, y, w, h] = cv2.boundingRect(pot_digit)
 
             # Does this contour match the averages
-            if h <= avg_digit_height * 1.2 and h >= avg_digit_height * 0.2 and y <= avg_digit_height * 1.2 and y >= avg_digit_y * 0.2:
+            if avg_digit_height * 0.2 <= h <= avg_digit_height * 1.2 and \
+                    avg_digit_y * 0.2 <= y <= avg_digit_height * 1.2:
                 # Crop the contour off the eroded image
+                # 这里是从eroded裁剪的 试试看换个裁剪方式
                 cropped = eroded[y:y + h, x: x + w]
                 # Draw a rect around it
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
@@ -173,7 +186,8 @@ class FrameProcessor:
                 output += digit
 
                 # Helper code to write out the digit image file for use in KNN training  非训练模式下不运行
-                if self.write_digits:#默认为false 此为写入图片
+                if self.write_digits:
+                    # 默认为false 此为写入图片
                     _, full_file = os.path.split(self.file_name)
                     file_name = full_file.split('.')
                     crop_file_path = CROP_DIR + '/' + digit + '_' + file_name[0] + '_crop_' + str(ix) + '.png'
@@ -199,7 +213,7 @@ class FrameProcessor:
         for pot_decimal in potential_decimals:
             [x, y, w, h] = cv2.boundingRect(pot_decimal)
 
-            if x < right_most_digit and x > left_most_digit and y > (self.height / 2):
+            if left_most_digit < x < right_most_digit and y > (self.height / 2):
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 decimal_x = x
 
