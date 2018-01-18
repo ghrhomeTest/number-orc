@@ -7,7 +7,7 @@ from UsbVideo import CaptureVideo
 
 
 window_name = 'Playground'
-file_name = 'tests/single_line/iii.jpg'
+file_name = 'tests/single_line/rect.jpg'
 # file_name = 'C:/Users/Administrator/Pictures/2.png'
 # file_name = 'samples/shell_berlin/test11.jpg'
 version = '_2_0'

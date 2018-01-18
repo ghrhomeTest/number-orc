@@ -15,7 +15,7 @@ class CaptureVideo:
         capture.set(3, 1920)
         capture.set(4, 1080)
         alpha = float(2.5)
-        #cv2.namedWindow("Capture", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("Capture", cv2.WINDOW_NORMAL)
 
         while capture.isOpened():
 
@@ -83,6 +83,21 @@ class HandelImage:
             if cv2.waitKey(0) & 0xFF == ord('q'):
                 cv2.destroyWindow('close')
                 print('闭运算完毕')
+                break
+
+# 轮廓测试
+    def img_contours(self):
+        im = self.img.copy()
+        # imggray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        inverse = (255-im)
+        ret, threshold = cv2.threshold(inverse, 127, 255, 0)
+        image, contours, hierarchy = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        img = cv2.drawContours(self.img, contours, 3, (254, 252, 0), 3)
+        while True:
+            cv2.imshow('contours', img)
+            if cv2.waitKey(0) & 0xFF == ord('q'):
+                cv2.destroyWindow('contours')
+                print('轮廓测试完毕')
                 break
 
     def adaptive_thresh(self):

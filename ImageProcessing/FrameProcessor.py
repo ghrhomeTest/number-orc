@@ -94,6 +94,7 @@ class FrameProcessor:
         # 描画轮廓 findContours返回三个参数 image,contours,hierarchy
         # cv2.RETR_EXTERNAL 检测最外围轮廓
         # cv2.CHAIN_APPROX_NONE 保存物体边界上所有连续的轮廓点到contours向量里
+        # 这个函数只能从黑底白字的图里找 即 寻找的东西是白色的 而背景是黑色的 必须是二值化之后的图
         _, contours, _ = cv2.findContours(inverse, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         # get contours 这里应该已经得到轮廓向量
 
@@ -108,7 +109,7 @@ class FrameProcessor:
         total_digit_height = 0
         total_digit_y = 0
 
-        # 不是1 的高宽比 0.6
+        # 希望得到的形状 0.6
         desired_aspect = 0.55
         # 1的高宽比
         digit_one_aspect = 0.3
@@ -124,6 +125,7 @@ class FrameProcessor:
             size = w * h
 
             # 方形的就作为一个小数点
+            # 这里应该要修改
             if size > 100 and 1 - .3 <= aspect <= 1 + .3:
                 potential_decimals.append(contour)
 
@@ -134,6 +136,7 @@ class FrameProcessor:
             # 忽略任何宽度大大与高度的长方形
             if w > h:
                 if self.debug:
+                    # 这里是描绘出最小矩形
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (0, 0, 255), 2)
                 continue
 
@@ -166,7 +169,9 @@ class FrameProcessor:
         ix = 0
         # 算法主要的调整部分
         # Loop over all the potential digits and see if they are candidates to run through KNN to get the digit
+        # 这里是把数字分别识别出来存入数组
         for pot_digit in potential_digits:
+            # 画出矩形
             [x, y, w, h] = cv2.boundingRect(pot_digit)
 
             # Does this contour match the averages
@@ -175,14 +180,14 @@ class FrameProcessor:
                 # Crop the contour off the eroded image
                 # 这里是从eroded裁剪的 试试看换个裁剪方式
                 cropped = eroded[y:y + h, x: x + w]
-                # Draw a rect around it
+                # Draw a rect around it 画个矩形 对象，左上角，右下角 颜色 通道数
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 debug_images.append(('digit' + str(ix), cropped))
 
                 # Call KNN to determine the digit
                 digit = self.predict_digit(cropped)
                 if self.debug:
-                    print("Digit: " + digit)
+                    print("Digit=======: " + digit)
                 output += digit
 
                 # Helper code to write out the digit image file for use in KNN training  非训练模式下不运行
@@ -194,9 +199,10 @@ class FrameProcessor:
                     cv2.imwrite(crop_file_path, cropped)
 
                 # Track the x positions of where the digits are  追踪X的位置
+                # 每个数字分别作为一个图 每个图的左上角的坐标其中的横坐标为X
                 if left_most_digit == 0 or x < left_most_digit:
                     left_most_digit = x
-
+                # 每个框的最右横坐标
                 if right_most_digit == 0 or x > right_most_digit:
                     right_most_digit = x + w
 
@@ -210,9 +216,13 @@ class FrameProcessor:
         decimal_x = 0
         # Loop over the potential digits and find a square that's between the left/right digit x positions on the
         # lower half of the screen
+        # 这里是识别小数点 并把位置算好存到数字中间
+        # x,y 是外框左上角坐标
         for pot_decimal in potential_decimals:
+            # 把所有潜在的小数点框出来 是方的
             [x, y, w, h] = cv2.boundingRect(pot_decimal)
-
+            # 横坐标是在左右之间 并 是在下半部分
+            # y坐标从上到下递增
             if left_most_digit < x < right_most_digit and y > (self.height / 2):
                 cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
                 decimal_x = x
