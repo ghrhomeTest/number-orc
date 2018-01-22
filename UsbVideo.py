@@ -90,13 +90,18 @@ class HandelImage:
         im = self.img.copy()
         # imggray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
         inverse = (255-im)
+        dilation = cv2.dilate(inverse, self.kernel, iterations=self.iter_n)
+        # 阈值二值化
         ret, threshold = cv2.threshold(inverse, 127, 255, 0)
         image, contours, hierarchy = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         img = cv2.drawContours(self.img, contours, 3, (254, 252, 0), 3)
         while True:
+            cv2.imshow('ori', im)
+            cv2.imshow('inv', inverse)
+            cv2.imshow('dil', dilation)
             cv2.imshow('contours', img)
             if cv2.waitKey(0) & 0xFF == ord('q'):
-                cv2.destroyWindow('contours')
+                cv2.destroyAllWindows()
                 print('轮廓测试完毕')
                 break
 

@@ -52,6 +52,8 @@ class FrameProcessor:
 
         self.img = self.original.copy()
         # image 输出
+        img_height = self.img.shape[0]
+        print(self.img.shape)
         debug_images = []
         # float(2.5)=1.250000 float保留六位小数
         alpha = float(2.5)
@@ -66,6 +68,14 @@ class FrameProcessor:
         img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
         debug_images.append(('Grayscale', img2gray))
 
+        # 霍夫圆
+        circles_gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        circles = cv2.HoughCircles(circles_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=1,
+                                   maxRadius=10)
+        if circles is None:
+            print('没有圆')
+        # print(circles)
+        # print(len(circles[0]))
         # 高斯模糊
         img_blurred = cv2.GaussianBlur(img2gray, (blur, blur), 0)
         debug_images.append(('Blurred', img_blurred))
@@ -218,14 +228,34 @@ class FrameProcessor:
         # lower half of the screen
         # 这里是识别小数点 并把位置算好存到数字中间
         # x,y 是外框左上角坐标
-        for pot_decimal in potential_decimals:
-            # 把所有潜在的小数点框出来 是方的
-            [x, y, w, h] = cv2.boundingRect(pot_decimal)
-            # 横坐标是在左右之间 并 是在下半部分
-            # y坐标从上到下递增
-            if left_most_digit < x < right_most_digit and y > (self.height / 2):
-                cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-                decimal_x = x
+
+        # 这里用霍夫圆替代 绘制出圆 计算出圆的圆心与半径 由圆心坐标得出此小数点的位置
+        # 具体为 使用某一个处理过的图像 检测其靠下部分的圆形位置 返回此圆的圆心坐标与半径
+        # for pot_decimal in potential_decimals:
+        #     # 把所有潜在的小数点框出来 是方的
+        #     [x, y, w, h] = cv2.boundingRect(pot_decimal)
+        #     # 横坐标是在左右之间 并 是在下半部分
+        #     # y坐标从上到下递增
+        #     if left_most_digit < x < right_most_digit and y > (self.height / 2):
+        #         # 画出外框 可省略
+        #         cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        #         # 这里是关键 小数点的横坐标
+        #         decimal_x = x
+
+        # 以下为寻找圆形小数点 成了 但是还有其他的前期工作 例如图像的裁剪
+        for circle in circles[0]:
+            if circle[1] > (img_height/3*2):
+                print(circle[2])
+                # 坐标行列
+                cir_x = int(circle[0])
+                cir_y = int(circle[1])
+                # 半径
+                cir_r = int(circle[2])
+                if left_most_digit < cir_x < right_most_digit and cir_y > (self.height / 2):
+                    decimal_x = cir_x
+        # 这里寻找完毕 得到了小数点圆心的横坐标 用于下面的对比
+        # 下面这行是测试用的 并且测试成功
+        # decimal_x = 110
 
         # Once we know the position of the decimal, we'll insert it into our string
         for ix, digit_x in enumerate(digit_x_positions):
