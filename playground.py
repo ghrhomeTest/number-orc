@@ -3,10 +3,11 @@ import time
 import sys
 from ImageProcessing import FrameProcessor, ProcessingVariables
 from DisplayUtils.TileDisplay import show_img, reset_tiles
-from UsbVideo import CaptureVideo
+from UsbVideo import CaptureVideo,circle_position
 
 
 window_name = 'Playground'
+# 传入文件要求白底黑字 2510.png ppp.jpg
 file_name = 'tests/single_line/ppp.jpg'
 # file_name = 'C:/Users/Administrator/Pictures/2.png'
 # file_name = 'samples/shell_berlin/test11.jpg'
@@ -18,10 +19,11 @@ threshold = ProcessingVariables.threshold
 adjustment = ProcessingVariables.adjustment
 iterations = ProcessingVariables.iterations
 blur = ProcessingVariables.blur
-
 std_height = 90
 
-frameProcessor = FrameProcessor(std_height, version, True)
+deci1, beishu1 = circle_position(file_name)
+
+frameProcessor = FrameProcessor(std_height, version, deci1, beishu1, True)
 
 # 主程序
 

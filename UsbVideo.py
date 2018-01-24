@@ -3,6 +3,24 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+# 寻找圆形小数点的位置 返回小数点横坐标和缩放比例
+def circle_position(re):
+    imgcir = cv2.imread(re)
+    imgcirheight = imgcir.shape[0]
+    imgcirgray = cv2.cvtColor(imgcir, cv2.COLOR_BGR2GRAY)
+    circles = cv2.HoughCircles(imgcirgray, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=5, maxRadius=50)
+    beishu = imgcirheight / float(90)
+    deci = 0
+    if circles is not None:
+        for circle in circles[0]:
+            if circle[1] > (imgcirheight / 3 * 2):
+                deci = int(circle[0])
+    else:
+        deci = 0
+
+    return deci, beishu
+
+
 # 拍个照
 class CaptureVideo:
     @staticmethod
@@ -30,9 +48,9 @@ class CaptureVideo:
             exposure_img = cv2.multiply(image, np.array([alpha]))
             img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
 
-            cv2.imshow("Capture", img2gray)
+            cv2.imshow("Capture", image)
 
-            if cv2.waitKey(0) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
         capture.release()

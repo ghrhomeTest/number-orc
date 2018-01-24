@@ -11,10 +11,12 @@ CROP_DIR = 'crops'
 
 
 class FrameProcessor:
-    def __init__(self, height, version, debug=False, write_digits=False):
+    def __init__(self, height, version, deci, beishu, debug=False, write_digits=False):
         self.debug = debug
         self.version = version
         self.height = height
+        self.deci = deci
+        self.beishu = beishu
         self.file_name = None
         self.img = None
         self.width = 0
@@ -97,9 +99,6 @@ class FrameProcessor:
         # 图像反转
         inverse = inverse_colors(eroded)
         debug_images.append(('Inversed', inverse))
-
-
-        #
 
         # 描画轮廓 findContours返回三个参数 image,contours,hierarchy
         # cv2.RETR_EXTERNAL 检测最外围轮廓
@@ -243,19 +242,19 @@ class FrameProcessor:
         #         decimal_x = x
 
         # 以下为寻找圆形小数点 成了 但是还有其他的前期工作 例如图像的裁剪
-        for circle in circles[0]:
-            if circle[1] > (img_height/3*2):
-                print(circle[2])
-                # 坐标行列
-                cir_x = int(circle[0])
-                cir_y = int(circle[1])
-                # 半径
-                cir_r = int(circle[2])
-                if left_most_digit < cir_x < right_most_digit and cir_y > (self.height / 2):
-                    decimal_x = cir_x
+        # for circle in circles[0]:
+        #     if circle[1] > (img_height/3*2):
+        #         print(circle[2])
+        #         # 坐标行列
+        #         cir_x = int(circle[0])
+        #         cir_y = int(circle[1])
+        #         # 半径
+        #         cir_r = int(circle[2])
+        #         if left_most_digit < cir_x < right_most_digit and cir_y > (self.height / 2):
+        #             decimal_x = cir_x
         # 这里寻找完毕 得到了小数点圆心的横坐标 用于下面的对比
         # 下面这行是测试用的 并且测试成功
-        # decimal_x = 110
+        decimal_x = self.deci/self.beishu
 
         # Once we know the position of the decimal, we'll insert it into our string
         for ix, digit_x in enumerate(digit_x_positions):

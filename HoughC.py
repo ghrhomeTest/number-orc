@@ -1,7 +1,7 @@
 import  cv2
 
 #载入并显示图片
-img=cv2.imread('pppp.jpg')
+img=cv2.imread('2510.png')
 cv2.imshow('img',img)
 #灰度化
 gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -11,7 +11,7 @@ print(img.shape)
 img_height = img.shape[0]
 print('图片高度'+str(img_height))
 #霍夫变换圆检测
-circles= cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,100,param1=100,param2=30,minRadius=1,maxRadius=10)
+circles= cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,100,param1=100,param2=30,minRadius=5,maxRadius=50)
 # cv2.HOUGH_GRADIENT
 # cv2.HOUGH_MULTI_SCALE
 # cv2.HOUGH_PROBABILISTIC
