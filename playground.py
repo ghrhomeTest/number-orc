@@ -7,7 +7,7 @@ from UsbVideo import CaptureVideo,circle_position
 
 
 window_name = 'Playground'
-# 传入文件要求白底黑字 2510.png ppp.jpg
+# 传入文件要求白底黑字 2510.png ppp.jpg 暂时是这两个测试文件
 file_name = 'tests/single_line/ppp.jpg'
 # file_name = 'C:/Users/Administrator/Pictures/2.png'
 # file_name = 'samples/shell_berlin/test11.jpg'
