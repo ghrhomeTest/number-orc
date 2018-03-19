@@ -3,12 +3,14 @@ import time
 import sys
 from ImageProcessing import FrameProcessor, ProcessingVariables
 from DisplayUtils.TileDisplay import show_img, reset_tiles
-from UsbVideo import CaptureVideo,circle_position
+from UsbVideo import circle_position
 
 
 window_name = 'Playground'
 # 传入文件要求白底黑字 2510.png ppp.jpg 暂时是这两个测试文件
-file_name = 'tests/single_line/ppp.jpg'
+# file_name = 'tests/single_line/2510.png'
+# 如果传入的是原始图像 则进入
+
 # file_name = 'C:/Users/Administrator/Pictures/2.png'
 # file_name = 'samples/shell_berlin/test11.jpg'
 version = '_2_0'
@@ -20,28 +22,37 @@ adjustment = ProcessingVariables.adjustment
 iterations = ProcessingVariables.iterations
 blur = ProcessingVariables.blur
 std_height = 90
+debug = False
 
-deci1, beishu1 = circle_position(file_name)
-
-frameProcessor = FrameProcessor(std_height, version, deci1, beishu1, True)
 
 # 主程序
-
-
-def main():
+def main(file_name):
     # 载入图像
+    deci1, beishu1 = circle_position(file_name)
+    frameProcessor = FrameProcessor(std_height, version, deci1, beishu1, debug)
     img_file = file_name
     if len(sys.argv) == 2:
         img_file = sys.argv[1]
     # 设置playground的UI
-    setup_ui()
+    if debug:
+        setup_ui()
     # 设置图像参数
     frameProcessor.set_image(img_file)
+    # result_str = ''
+    # print(result_str)
     # 处理图像
-    process_image()
+    # process_image()
+    reset_tiles()
+    start_time = time.time()
+    # 处理图像
+    debug_images, output = frameProcessor.process_image(blur, threshold, adjustment, erode, iterations)
+    result_str = output
+    #result_str = process_image()
+    # print(result_str)
     # 等待 这里应该在
     # CaptureVideo.cap_video()
-    cv2.waitKey()
+    # cv2.waitKey()
+    return result_str
 
 
 def process_image():
@@ -51,13 +62,14 @@ def process_image():
     # 处理图像
     debug_images, output = frameProcessor.process_image(blur, threshold, adjustment, erode, iterations)
 
-    for image in debug_images:
-        show_img(image[0], image[1])
-
-    print("Processed image in %s seconds" % (time.time() - start_time))
-
-    cv2.imshow(window_name, frameProcessor.img)
-    cv2.moveWindow(window_name, 600, 600)
+    # 显示处理过程
+    # for image in debug_images:
+    #     show_img(image[0], image[1])
+    # if debug:
+    #     print("Processed image in %s seconds" % (time.time() - start_time))
+    #     cv2.imshow(window_name, frameProcessor.img)
+    #     cv2.moveWindow(window_name, 600, 600)
+    return output
 
 
 def setup_ui():

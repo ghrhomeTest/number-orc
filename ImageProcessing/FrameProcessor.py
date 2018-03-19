@@ -55,27 +55,33 @@ class FrameProcessor:
         self.img = self.original.copy()
         # image 输出
         img_height = self.img.shape[0]
-        print(self.img.shape)
+        if self.debug:
+            print(self.img.shape)
         debug_images = []
         # float(2.5)=1.250000 float保留六位小数
         alpha = float(2.5)
 
         debug_images.append(('Original', self.original))
 
-        # 调整曝光度
-        exposure_img = cv2.multiply(self.img, np.array([alpha]))
+        imggray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        imgrev = 255-imggray
+        _, imgth = cv2.threshold(imgrev, 127, 255, cv2.THRESH_BINARY)
+        # 调整曝光度 如果传入的是未经处理的图像则需要先进行处理
+        # exposure_img = cv2.multiply(self.img, np.array([alpha]))
+        exposure_img = cv2.multiply(imgth, np.array([alpha]))
         debug_images.append(('Exposure Adjust', exposure_img))
 
         # 灰度转换 这里出来的图像最干净
-        img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
+        # img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
+        img2gray = exposure_img
         debug_images.append(('Grayscale', img2gray))
 
         # 霍夫圆
-        circles_gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-        circles = cv2.HoughCircles(circles_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=1,
-                                   maxRadius=10)
-        if circles is None:
-            print('没有圆')
+        # circles_gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        # circles = cv2.HoughCircles(circles_gray, cv2.HOUGH_GRADIENT, 1, 100, param1=100, param2=30, minRadius=1,
+        #                            maxRadius=10)
+        # if circles is None:
+        #     print('没有圆')
         # print(circles)
         # print(len(circles[0]))
         # 高斯模糊

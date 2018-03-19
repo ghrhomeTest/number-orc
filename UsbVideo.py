@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 
 
 # 寻找圆形小数点的位置 返回小数点横坐标和缩放比例
+# 会出现找不到圆形的情况 目前的想法是 检测出数字框 然后每个数字框横坐标加一些像素 能得到不是全白的就是小数点的位置
 def circle_position(re):
     imgcir = cv2.imread(re)
     imgcirheight = imgcir.shape[0]
@@ -48,7 +49,7 @@ class CaptureVideo:
             exposure_img = cv2.multiply(image, np.array([alpha]))
             img2gray = cv2.cvtColor(exposure_img, cv2.COLOR_BGR2GRAY)
 
-            cv2.imshow("Capture", image)
+            cv2.imshow("Capture", img2gray)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
